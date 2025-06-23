@@ -1,0 +1,57 @@
+{% extends "header.html" %}
+{% load static %}
+{% block content %}
+
+<!--Page Title-->
+<section class="page-title text-center" style="background-image:url({% static 'images/background/3.jpg' %});">
+    <div class="container">
+        <div class="title-text">
+            <h1>appointment</h1>
+            <ul class="title-menu clearfix">
+                <li>
+                    <a href="{% url 'index' %}">home &nbsp;/</a>
+                </li>
+                <li>appointment</li>
+            </ul>
+        </div>
+    </div>
+</section>
+<!--End Page Title-->
+
+
+<!-- Contact Section -->
+<section class="blog-section section style-three pb-10">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-sm-10">
+                <div class="contact-area style-two">
+                    <div class="section-title text-center">
+                        <h3><span>Login</span></h3>
+                    </div>
+                    <form method="post" action="{% url 'login' %}" class="bg-light p-10 contact-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <input type="email" class="form-control" placeholder="Your Email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="form-control" placeholder="Your Password" name="password" required>
+                        </div>
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn-style-one">Login</button>
+                            <br>
+                            <a href="{% url 'fpass' %}">Forgot Password?</a>
+                        </div>
+                        {% if msg %}
+                            <div style="color: red; text-align: center; margin-bottom: 10px;">
+                                {{ msg }}
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Contact Section -->
+
+{% endblock %}

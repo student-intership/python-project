@@ -1,0 +1,55 @@
+{% extends "header.html" %}
+{% load static %}
+{% block content %}
+
+<!--Page Title-->
+<section class="page-title text-center" style="background-image:url({% static 'images/background/3.jpg' %});">
+    <div class="container">
+        <div class="title-text">
+            <h1>appointment</h1>
+            <ul class="title-menu clearfix">
+                <li>
+                    <a href="{% url 'index' %}">home &nbsp;/</a>
+                </li>
+                <li>appointment</li>
+            </ul>
+        </div>
+    </div>
+</section>
+<!--End Page Title-->
+
+<!-- Contact Section -->
+<section class="blog-section section style-three pb-10">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-sm-10">
+                <div class="contact-area style-two">
+                    <div class="section-title text-center">
+                        <h3><span>Change-Password</span></h3>
+                    </div>
+                    <form method="post" action="{% url 'cpass' %}" class="bg-light p-10 contact-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <input type="password" class="form-control" placeholder="old-password" name="opassword">
+                        </div>
+                        
+                        <div class="form-group">
+                            <input type="password" class="form-control" placeholder="Your New Password" name="npassword">
+                        </div>
+
+                        <div class="form-group">
+                            <input type="password" class="form-control" placeholder="Your Confirm New Password" name="cnpassword">
+                        </div>
+
+                        <div class="form-group">
+                            <input type="submit" value="Update Password" class="btn btn-primary py-3 px-5">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Contact Section -->
+
+{% endblock %}

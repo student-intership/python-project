@@ -1,0 +1,352 @@
+{% extends "dheader.html" %}
+{% load static %}
+{% block content %}
+
+<section class="ftco-section py-5" style="background: #ffffff;">
+    <div class="container">
+        <!-- Header Section -->
+        <div class="row mb-5 align-items-center justify-content-between">
+            <div class="col-12 col-md-6 mb-4 mb-md-0">
+                <h1 class="text-dark fw-bold" style="position: relative; display: inline-block;">
+                    Available Doctors
+                    <span class="underline-effect" style="position: absolute; bottom: -10px; left: 0; width: 50px; height: 4px; background: #00b4d8; border-radius: 2px;"></span>
+                </h1>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="sort-wrapper position-relative">
+                    <select id="sortSelect" class="form-select shadow-sm border-0 py-2 px-4 w-100" style="border-radius: 25px; background: #f8f9fa;">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="exp-asc">Experience (Low-High)</option>
+                        <option value="exp-desc">Experience (High-Low)</option>
+                        <option value="dept-asc">Department (A-Z)</option>
+                        <option value="dept-desc">Department (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctor Cards -->
+        {% if adds %}
+        <div class="row g-4" id="doctorList">
+            {% for doctor in adds %}
+            <div class="col-12 col-sm-6 col-lg-4 doctor-item"
+                 data-name="{{ doctor.dname|default:'' }}"
+                 data-exp="{{ doctor.dexperience|default:'0'|floatformat }}"
+                 data-dept="{{ doctor.department|default:'' }}">
+                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden"
+                     style="border-radius: 20px; background: #ffffff;">
+                    
+                    <!-- Doctor Image -->
+                    <div class="card-img-top position-relative">
+                        {% if doctor.dprofile %}
+                            <img src="{{ doctor.dprofile.url }}"
+                                 class="img-fluid w-100 object-fit-cover"
+                                 alt="{{ doctor.dname }}"
+                                 loading="lazy"
+                                 style="height: 300px; width: 100%; object-fit: cover; border-radius: 20px 20px 0 0;"
+                                 onerror="this.onerror=null; this.src='{% static 'images/default-doctor.jpg' %}';">
+                        {% else %}
+                            <img src="{% static 'images/default-doctor.jpg' %}"
+                                 class="img-fluid w-100 object-fit-cover"
+                                 alt="{{ doctor.dname }}"
+                                 style="height: 400px; width: 500%; object-fit: cover; border-radius: 20px 20px 0 0;">
+                        {% endif %}
+                        <div class="overlay"></div>
+                        <span class="badge position-absolute top-0 end-0 m-3 py-2 px-3"
+                              style="background:rgb(8, 8, 8); border-radius: 15px; font-size: 20px;">
+                            {{ doctor.department }}
+                        </span>
+                    </div>
+
+                    <!-- Doctor Details -->
+                    <div class="card-body p-4 d-flex flex-column">
+                        <h3 class="card-title mb-3" style="font-size: 2rem; font-weight: 600;">
+                            {{ doctor.dname }}
+                        </h3>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-user-md me-2"></i>
+                            <span style="font-size: 1.1rem;">{{ doctor.dexperience }} Years Experience</span>
+                        </p>
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-phone me-2"></i>
+                            <span style="font-size: 1.1rem;">{{ doctor.dmobile }}</span>
+                        </p>
+
+                        <!-- Fees -->
+                        <div class="border-top pt-2 mt-2">
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-rupee-sign me-2"></i>Initial Consultation: ₹{{ doctor.consultation_fee }}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-rupee-sign me-2"></i>Follow-up: ₹{{ doctor.follow_up_fee }}
+                            </p>
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-rupee-sign me-2"></i>Emergency: ₹{{ doctor.emergency_fee }}
+                            </p>
+                        </div>
+
+                        <div class="mt-auto d-flex gap-2">
+                            <a href="{% url 'update' doctor.id %}" 
+                               class="btn btn-outline-primary w-100 fw-medium"
+                               style="border-radius: 25px; padding: 10px;">
+                                <i class="fas fa-edit me-2"></i>Update
+                            </a>
+                            <a href="{% url 'delete_doctor' doctor.id %}" 
+                               class="btn btn-outline-danger w-100 fw-medium"
+                               style="border-radius: 25px; padding: 10px;"
+                               onclick="return confirm('Are you sure you want to delete {{ doctor.dname|escapejs }}?');">
+                                <i class="fas fa-trash me-2"></i>Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- No Doctors Found -->
+        <div class="text-center py-5">
+            <h3 class="text-dark fw-bold">No Doctors Available</h3>
+            <p class="text-muted mt-3">Please check back later!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+
+<style>
+    :root {
+        --primary: #00b4d8;
+        --danger: #ff6b6b;
+        --light: #f8f9fa;
+        --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #ffffff;
+    }
+
+    .ftco-section {
+        padding: 5rem 0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+
+    .sort-wrapper::before {
+        content: 'Sort:';
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
+    .form-select {
+        padding-left: 60px !important;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .form-select:focus {
+        box-shadow: 0 6px 20px rgba(0,180,216,0.2);
+        border-color: var(--primary);
+    }
+
+    .card {
+        transition: var(--transition);
+        transform: translateY(0);
+    }
+
+    .card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .card-img-top {
+        position: relative;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.3));
+        transition: var(--transition);
+    }
+
+    .card:hover .overlay {
+        background: linear-gradient(to bottom, rgba(0,180,216,0.1), rgba(0,0,0,0.4));
+    }
+
+    .card-title a:hover {
+        color: var(--primary);
+    }
+
+    .btn-outline-primary {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .btn-outline-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+
+    .btn-outline-danger:hover {
+        background: var(--danger);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .card-hover-effect {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,180,216,0);
+        transition: var(--transition);
+        pointer-events: none;
+        border-radius: 20px;
+    }
+
+    .card:hover .card-hover-effect {
+        background: rgba(0,180,216,0.05);
+    }
+
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .card {
+            border-radius: 15px;
+        }
+        
+        .card-img-top img {
+            height: 180px;
+        }
+        
+        .card-body {
+            padding: 1.25rem !important;
+        }
+        
+        .btn {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation observer
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.doctor-item').forEach(card => observer.observe(card));
+
+    // Sorting functionality
+    const sortSelect = document.getElementById('sortSelect');
+    const doctorList = document.getElementById('doctorList');
+    const doctorItems = Array.from(doctorList.getElementsByClassName('doctor-item'));
+
+    sortSelect.addEventListener('change', function() {
+        const sortValue = this.value;
+        
+        doctorItems.sort((a, b) => {
+            const nameA = a.dataset.name.toLowerCase();
+            const nameB = b.dataset.name.toLowerCase();
+            const expA = parseFloat(a.dataset.exp) || 0;
+            const expB = parseFloat(b.dataset.exp) || 0;
+            const deptA = a.dataset.dept.toLowerCase();
+            const deptB = b.dataset.dept.toLowerCase();
+
+            switch(sortValue) {
+                case 'name-asc': return nameA.localeCompare(nameB);
+                case 'name-desc': return nameB.localeCompare(nameA);
+                case 'exp-asc': return expA - expB;
+                case 'exp-desc': return expB - expA;
+                case 'dept-asc': return deptA.localeCompare(deptB);
+                case 'dept-desc': return deptB.localeCompare(deptA);
+                default: return 0;
+            }
+        });
+
+        doctorList.innerHTML = '';
+        doctorItems.forEach(item => {
+            doctorList.appendChild(item);
+            item.classList.remove('fade-in');
+            observer.observe(item);
+        });
+    });
+
+    // Add ripple effect on button clicks
+    document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const ripple = document.createElement('span');
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${e.clientX - rect.left - size/2}px`;
+            ripple.style.top = `${e.clientY - rect.top - size/2}px`;
+            ripple.classList.add('ripple');
+            
+            btn.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+});
+</script>
+
+<style>
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.4);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+</style>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+{% endblock %}

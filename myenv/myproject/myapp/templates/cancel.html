@@ -1,0 +1,177 @@
+<!-- cancel.html -->
+{% extends 'dheader.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-times-circle"></i> Cancel Appointment
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if appointment %}
+                        <!-- Appointment Details -->
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle"></i> Appointment Details</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Patient:</strong> {{ appointment.name }}</p>
+                                    <p><strong>Date:</strong> {{ appointment.date }}</p>
+                                    <p><strong>Time:</strong> {{ appointment.time }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Doctor:</strong> {{ appointment.doctor.dname|default:"Not assigned" }}</p>
+                                    <p><strong>Status:</strong> 
+                                        <span class="badge {% if appointment.status == 'Confirmed' %}badge-success{% elif appointment.status == 'Pending' %}badge-warning{% else %}badge-danger{% endif %}">
+                                            {{ appointment.status }}
+                                        </span>
+                                    </p>
+                                    <p><strong>Appointment ID:</strong> #{{ appointment.id }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cancel Form -->
+                        <form method="POST" action="{% url 'cancel_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="cancel_reason"><strong>Reason for Cancellation:</strong></label>
+                                <textarea class="form-control" id="cancel_reason" name="cancel_reason" rows="4" 
+                                          placeholder="Please provide a reason for canceling this appointment..." required></textarea>
+                            </div>
+                            
+                            <div class="form-group mt-3">
+                                <label for="cancel_type"><strong>Cancellation Type:</strong></label>
+                                <select class="form-control" id="cancel_type" name="cancel_type" required>
+                                    <option value="">Select cancellation type...</option>
+                                    <option value="patient_request">Patient Request</option>
+                                    <option value="doctor_unavailable">Doctor Unavailable</option>
+                                    <option value="emergency">Emergency</option>
+                                    <option value="rescheduled">Rescheduled</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="notify_patient" name="notify_patient" checked>
+                                    <label class="form-check-label" for="notify_patient">
+                                        Notify patient about cancellation
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Warning:</strong> This action cannot be undone. The appointment will be permanently canceled.
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% url 'patient_details' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Appointments
+                                </a>
+                                <div>
+                                    <button type="button" class="btn btn-outline-secondary me-2" onclick="history.back()">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-times-circle"></i> Confirm Cancellation
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Appointment not found or you don't have permission to cancel it.
+                        </div>
+                        <a href="{% url 'patient_details' %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Appointments
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmCancelModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Cancellation
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you absolutely sure you want to cancel this appointment?</p>
+                <p class="text-muted"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No, Keep Appointment</button>
+                <button type="button" class="btn btn-danger" id="finalConfirmCancel">Yes, Cancel Appointment</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show confirmation modal
+        $('#confirmCancelModal').modal('show');
+    });
+    
+    // Handle final confirmation
+    document.getElementById('finalConfirmCancel').addEventListener('click', function() {
+        $('#confirmCancelModal').modal('hide');
+        form.submit();
+    });
+    
+    // Form validation
+    const cancelReason = document.getElementById('cancel_reason');
+    const cancelType = document.getElementById('cancel_type');
+    
+    function validateForm() {
+        const reasonValid = cancelReason.value.trim().length > 0;
+        const typeValid = cancelType.value !== '';
+        
+        submitBtn.disabled = !(reasonValid && typeValid);
+        
+        if (!reasonValid) {
+            cancelReason.classList.add('is-invalid');
+        } else {
+            cancelReason.classList.remove('is-invalid');
+        }
+        
+        if (!typeValid) {
+            cancelType.classList.add('is-invalid');
+        } else {
+            cancelType.classList.remove('is-invalid');
+        }
+    }
+    
+    cancelReason.addEventListener('input', validateForm);
+    cancelType.addEventListener('change', validateForm);
+    
+    // Initial validation
+    validateForm();
+});
+</script>
+{% endblock %} 

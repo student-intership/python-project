@@ -1,0 +1,393 @@
+<!-- patient_details.html -->
+{% extends 'dheader.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    {% if user %}
+        {% if user.usertype == "Doctor" %}         <!-- Doctor Dashboard -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h2 class="mb-4">Doctor Dashboard - Patient Details</h2>
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-user-md me-2"></i>
+                        <strong>Welcome Dr. {{ user.name }}!</strong> Here are all your patient appointments.
+                    </div>
+                </div>
+            </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>#</th>
+                                <th>Patient Name</th>
+                                <th>Age</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Appointment Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong>{{ appointment.name }}</strong></td>
+                                <td>{{ appointment.age }}</td>
+                                <td>{{ appointment.phone }}</td>
+                                <td>{{ appointment.email }}</td>
+                                <td>{{ appointment.address }}</td>
+                                <td>{{ appointment.date }}</td>
+                                <td>{{ appointment.time }}</td>
+                                <td>
+                                    <span class="badge {% if appointment.status == 'Confirmed' %}bg-success{% elif appointment.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ appointment.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'appointment_details' appointment.id %}" class="btn btn-sm btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
+                                        {% if appointment.status == 'Pending' %}
+                                            <button class="btn btn-sm btn-success" title="Confirm Appointment" onclick="confirmAppointment({{ appointment.id }})">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <a href="{% url 'cancel_appointment' appointment.id %}" class="btn btn-sm btn-danger" title="Cancel Appointment">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        {% elif appointment.status == 'Confirmed' %}
+                                            <a href="{% url 'cancel_appointment' appointment.id %}" class="btn btn-sm btn-warning" title="Cancel Appointment">
+                                                <i class="fas fa-ban"></i>
+                                            </a>
+                                        {% elif appointment.status == 'Denied' %}
+                                            <button class="btn btn-sm btn-success" title="Reconsider Appointment" onclick="reconsiderAppointment({{ appointment.id }})">
+                                                <i class="fas fa-redo"></i>
+                                            </button>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'print_appointments' %}?type=single&appointment_id={{ appointment.id }}" class="btn btn-sm btn-primary" title="Print Details">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10" class="text-center text-muted">No patient appointments found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmModalTitle">Confirm Action</h5>
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" id="confirmModalBody">
+                            <!-- Modal content will be loaded here -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirmModalBtn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% elif user.usertype == "Patient" %}
+            <!-- Patient Dashboard -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h2 class="mb-4">Patient Dashboard - My Appointments</h2>
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-user me-2"></i>
+                        <strong>Welcome {{ user.name }}!</strong> Here are your appointment details.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>My Appointments</h5>
+                        <div class="d-flex align-items-center">
+                            <form method="GET" class="d-flex me-3">
+                                <select name="status" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                                    <option value="">All Status</option>
+                                    {% for status in available_statuses %}
+                                    <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>
+                                        {{ status }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if status_filter %}
+                                <a href="{% url 'patient_details' %}" class="btn btn-sm btn-outline-light">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                                {% endif %}
+                            </form>
+                            <div class="btn-group me-2">
+                                <a href="{% url 'print_appointments' %}" class="btn btn-sm btn-outline-light" title="Print All Appointments">
+                                    <i class="fas fa-print"></i> All
+                                </a>
+                                <a href="{% url 'print_appointments' %}?type=upcoming" class="btn btn-sm btn-outline-light" title="Print Upcoming Appointments">
+                                    <i class="fas fa-calendar-check"></i> Upcoming
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-success">
+                            <tr>
+                                <th>#</th>
+                                <th>Doctor Name</th>
+                                <th>Department</th>
+                                <th>Appointment Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong>{{ appointment.doctor.dname|default:"-" }}</strong></td>
+                                <td>{{ appointment.doctor.department|default:"-" }}</td>
+                                <td>{{ appointment.date }}</td>
+                                <td>{{ appointment.time }}</td>
+                                <td>
+                                    <span class="badge {% if appointment.status == 'Confirmed' %}bg-success{% elif appointment.status == 'Pending' %}bg-warning{% elif appointment.status == 'Denied' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ appointment.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'appointment_details' appointment.id %}" class="btn btn-sm btn-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if appointment.status == 'Pending' %}
+                                        <a href="{% url 'cancel_appointment' appointment.id %}" class="btn btn-sm btn-warning" title="Cancel Appointment">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'print_appointments' %}?type=single&appointment_id={{ appointment.id }}" class="btn btn-sm btn-primary" title="Print Details">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-center text-muted">No appointments found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Access Denied -->
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Access Denied</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <i class="fas fa-lock text-danger" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3">Permission Required</h4>
+                            <p class="text-muted">You don't have permission to view patient details. Only doctors and patients can access this page.</p>
+                            <hr>
+                            <a href="{% url 'index' %}" class="btn btn-primary">Go to Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- Not Logged In -->
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Authentication Required</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-lock text-warning" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">Login Required</h4>
+                        <p class="text-muted">You must be logged in to view patient details.</p>
+                        <hr>
+                        <a href="{% url 'login' %}" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for Appointment Management -->
+<script>
+    // Doctor Functions
+    function confirmAppointment(appointmentId) {
+        showConfirmModal(
+            'Confirm Appointment',
+            'Are you sure you want to confirm this appointment? The patient will be notified.',
+            'Confirm',
+            'btn-success',
+            () => updateAppointmentStatus(appointmentId, 'Confirmed')
+        );
+    }
+
+    function denyAppointment(appointmentId) {
+        showConfirmModal(
+            'Deny Appointment',
+            'Are you sure you want to deny this appointment? The patient will be notified.',
+            'Deny',
+            'btn-danger',
+            () => updateAppointmentStatus(appointmentId, 'Denied')
+        );
+    }
+
+    function cancelAppointment(appointmentId) {
+        showConfirmModal(
+            'Cancel Appointment',
+            'Are you sure you want to cancel this confirmed appointment? The patient will be notified.',
+            'Cancel',
+            'btn-warning',
+            () => updateAppointmentStatus(appointmentId, 'Cancelled')
+        );
+    }
+
+    function reconsiderAppointment(appointmentId) {
+        showConfirmModal(
+            'Reconsider Appointment',
+            'Are you sure you want to reconsider this denied appointment? It will be set back to pending.',
+            'Reconsider',
+            'btn-info',
+            () => updateAppointmentStatus(appointmentId, 'Pending')
+        );
+    }
+
+    function viewAppointmentDetails(appointmentId) {
+        // This would typically fetch and display detailed appointment information
+        alert('View details for appointment ID: ' + appointmentId);
+    }
+
+    function printAppointment(appointmentId) {
+        // This would typically print appointment details
+        alert('Print appointment ID: ' + appointmentId);
+    }
+
+    // Patient Functions
+    function cancelPatientAppointment(appointmentId) {
+        showConfirmModal(
+            'Cancel Appointment',
+            'Are you sure you want to cancel this appointment?',
+            'Cancel',
+            'btn-warning',
+            () => updateAppointmentStatus(appointmentId, 'Cancelled')
+        );
+    }
+
+    function printPatientAppointment(appointmentId) {
+        // This would typically print appointment details
+        alert('Print appointment ID: ' + appointmentId);
+    }
+
+    // Utility Functions
+    function showConfirmModal(title, message, buttonText, buttonClass, onConfirm) {
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalBody').innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-question-circle text-warning" style="font-size: 3rem;"></i>
+                <p class="mt-3">${message}</p>
+            </div>
+        `;
+        
+        const confirmBtn = document.getElementById('confirmModalBtn');
+        confirmBtn.textContent = buttonText;
+        confirmBtn.className = `btn ${buttonClass}`;
+        
+        // Remove previous event listeners
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        
+        // Add new event listener
+        newBtn.addEventListener('click', () => {
+            onConfirm();
+            $('#confirmModal').modal('hide');
+        });
+        
+        $('#confirmModal').modal('show');
+    }
+
+    function updateAppointmentStatus(appointmentId, status) {
+        // This would typically make an AJAX call to update the appointment status
+        // For now, we'll show a success message and reload the page
+        
+        const statusMessages = {
+            'Confirmed': 'Appointment confirmed successfully!',
+            'Denied': 'Appointment denied successfully!',
+            'Cancelled': 'Appointment cancelled successfully!',
+            'Pending': 'Appointment status updated to pending!'
+        };
+        
+        alert(statusMessages[status] || 'Status updated successfully!');
+        
+        // In a real implementation, you would make an AJAX call here:
+        /*
+        fetch(`/update-appointment-status/${appointmentId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating appointment status');
+            }
+        });
+        */
+        
+        // For demo purposes, reload the page
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

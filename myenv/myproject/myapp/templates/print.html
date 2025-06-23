@@ -1,0 +1,560 @@
+{% extends 'header.html' %}
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Print - {{ title|default:"Medical Appointments" }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Print-optimized styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+            margin: 20px;
+        }
+        
+        .print-header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .print-header h1 {
+            color: #007bff;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .print-header .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .print-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .info-section {
+            flex: 1;
+        }
+        
+        .info-section h3 {
+            color: #007bff;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .info-item {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .appointments-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .appointments-table th,
+        .appointments-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+        
+        .appointments-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .appointments-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-confirmed {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-completed {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status-denied {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+        
+        .appointment-details {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        
+        .appointment-details h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .detail-item {
+            margin-bottom: 10px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .no-print {
+            display: none;
+        }
+        
+        .print-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .print-controls button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .print-controls button:hover {
+            background: #0056b3;
+        }
+        
+        .print-controls .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .print-controls .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        /* Print media query */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                margin: 0;
+                padding: 20px;
+            }
+            
+            .print-controls {
+                display: none;
+            }
+            
+            .appointments-table th {
+                background-color: #007bff !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .status-badge {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        
+        /* Summary section */
+        .summary-section {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .summary-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .summary-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Print Controls (hidden when printing) -->
+    <div class="print-controls no-print">
+        <button onclick="window.print()">
+            <i class="fa fa-print"></i> Print
+        </button>
+        <button onclick="window.close()" class="btn-secondary">
+            <i class="fa fa-times"></i> Close
+        </button>
+        <button onclick="window.location.reload()" class="btn-secondary">
+            <i class="fa fa-refresh"></i> Refresh
+        </button>
+        <button onclick="saveAsPDF()" style="background-color: #28a745; color: white; border: none; padding: 8px 16px; margin: 5px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+            <i class="fa fa-save"></i> Save as PDF
+        </button>
+    </div>
+
+    <div class="print-content-wrapper">
+        <!-- Header -->
+        <div class="print-header">
+            <h1>Medical Appointment Report</h1>
+            <div class="subtitle">
+                <strong>{{ title|default:"Appointment Details" }}</strong><br>
+                Generated on: {{ current_date|default:"Today" }}
+            </div>
+        </div>
+
+        <!-- User Information -->
+        <div class="print-info">
+            <div class="info-section">
+                <h3>User Information</h3>
+                <div class="info-item">
+                    <span class="info-label">Name:</span> {{ user.name|default:"N/A" }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span> {{ user.email|default:"N/A" }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">User Type:</span> {{ user.usertype|default:"N/A" }}
+                </div>
+            </div>
+            <div class="info-section">
+                <h3>Report Details</h3>
+                <div class="info-item">
+                    <span class="info-label">Total Appointments:</span> {{ appointments|length }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status Filter:</span> {{ status_filter|default:"All" }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Print Date:</span> {{ current_date|default:"Today" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        {% if appointments %}
+        <div class="summary-section">
+            <h3 style="margin-bottom: 15px; color: #007bff;">Appointment Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-number">{{ appointments|length }}</div>
+                    <div class="summary-label">Total Appointments</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number">{{ appointments|dictsort:"status"|length }}</div>
+                    <div class="summary-label">Different Statuses</div>
+                </div>
+                {% if user.usertype == "Doctor" %}
+                <div class="summary-item">
+                    <div class="summary-number">{{ appointments|dictsort:"name"|length }}</div>
+                    <div class="summary-label">Unique Patients</div>
+                </div>
+                {% else %}
+                <div class="summary-item">
+                    <div class="summary-number">{{ appointments|dictsort:"doctor.dname"|length }}</div>
+                    <div class="summary-label">Unique Doctors</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Appointments Table -->
+        {% if appointments %}
+            <table class="appointments-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        {% if user.usertype == "Doctor" %}
+                            <th>Patient Name</th>
+                            <th>Patient Email</th>
+                            <th>Patient Phone</th>
+                        {% else %}
+                            <th>Doctor Name</th>
+                            <th>Department</th>
+                        {% endif %}
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        {% if user.usertype == "Doctor" %}
+                            <th>Age</th>
+                            <th>Address</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        {% if user.usertype == "Doctor" %}
+                            <td><strong>{{ appointment.name }}</strong></td>
+                            <td>{{ appointment.email }}</td>
+                            <td>{{ appointment.phone }}</td>
+                        {% else %}
+                            <td><strong>{{ appointment.doctor.dname|default:"Not assigned" }}</strong></td>
+                            <td>{{ appointment.doctor.department|default:"Not specified" }}</td>
+                        {% endif %}
+                        <td>{{ appointment.date }}</td>
+                        <td>{{ appointment.time }}</td>
+                        <td>
+                            <span class="status-badge status-{{ appointment.status|lower }}">
+                                {{ appointment.status }}
+                            </span>
+                        </td>
+                        {% if user.usertype == "Doctor" %}
+                            <td>{{ appointment.age }}</td>
+                            <td>{{ appointment.address|default:"Not provided" }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="appointment-details">
+                <h3>No Appointments Found</h3>
+                <p>There are no appointments to display for the current filter criteria.</p>
+            </div>
+        {% endif %}
+
+        <!-- Individual Appointment Details (if single appointment) -->
+        {% if appointment %}
+        <div class="appointment-details">
+            <h3>Detailed Appointment Information</h3>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Appointment ID:</span>
+                    <span class="detail-value">#{{ appointment.id }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">
+                        <span class="status-badge status-{{ appointment.status|lower }}">
+                            {{ appointment.status }}
+                        </span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Patient Name:</span>
+                    <span class="detail-value">{{ appointment.name }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Patient Email:</span>
+                    <span class="detail-value">{{ appointment.email }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Patient Phone:</span>
+                    <span class="detail-value">{{ appointment.phone }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Patient Age:</span>
+                    <span class="detail-value">{{ appointment.age }} years</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Appointment Date:</span>
+                    <span class="detail-value">{{ appointment.date }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Appointment Time:</span>
+                    <span class="detail-value">{{ appointment.time }}</span>
+                </div>
+                {% if appointment.doctor %}
+                <div class="detail-item">
+                    <span class="detail-label">Doctor Name:</span>
+                    <span class="detail-value">{{ appointment.doctor.dname }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Department:</span>
+                    <span class="detail-value">{{ appointment.doctor.department }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Consultation Fee:</span>
+                    <span class="detail-value">${{ appointment.doctor.consultation_fee|default:"0" }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <span class="detail-label">Patient Address:</span>
+                    <span class="detail-value">{{ appointment.address|default:"Not provided" }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+    </div>
+
+    <script>
+        // Auto-print when page loads (optional)
+        // window.onload = function() {
+        //     window.print();
+        // };
+        
+        // Add current date if not provided
+        if (!document.querySelector('.subtitle').textContent.includes('Today')) {
+            const today = new Date().toLocaleDateString();
+            document.querySelector('.subtitle').innerHTML = document.querySelector('.subtitle').innerHTML.replace('Today', today);
+        }
+
+        function saveAsPDF() {
+            const printContent = document.querySelector('.print-content-wrapper');
+            const printControls = document.querySelector('.print-controls');
+            
+            // Temporarily hide the controls for a clean capture
+            if(printControls) printControls.style.display = 'none';
+            
+            html2canvas(printContent, {
+                scale: 2, // Higher scale for better quality
+                useCORS: true
+            }).then(canvas => {
+                // Show controls again
+                if(printControls) printControls.style.display = 'block';
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // A4 paper size in mm: 210x297
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                const canvasAspectRatio = canvasHeight / canvasWidth;
+                
+                const imgHeight = pdfWidth * canvasAspectRatio;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                while (heightLeft > 0) {
+                    position = -heightLeft;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+                }
+
+                pdf.save('appointment-report.pdf');
+
+            }).catch(error => {
+                if(printControls) printControls.style.display = 'block';
+                alert('Sorry, an error occurred while saving the PDF.');
+                console.error("Error generating PDF:", error);
+            });
+        }
+    </script>
+</body>
+</html> 
+{% endblock %}

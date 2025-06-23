@@ -1,0 +1,153 @@
+{% extends "dheader.html" %}
+{% load static %}
+{% block content %}
+
+<!--Page Title-->
+<section class="page-title text-center" style="background-image:url({% static 'images/background/3.jpg' %});">
+    <div class="container">
+        <div class="title-text">
+            <h1>Add Doctor</h1>
+            <ul class="title-menu clearfix">
+                <li><a href="{% url  'dindex' %}">home &nbsp;/</a></li>
+                <li>Add Doctor</li>
+            </ul>
+        </div>
+    </div>
+</section>
+<!--End Page Title-->
+
+<!-- Add Doctor Section -->
+<section class="d-flex align-items-center justify-content-center" style="min-height: 9vh;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <form method="post" action="{% url 'adddoc' %}" class="bg-light p-5 rounded shadow-lg contact-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="section-title text-center">
+                        <h3><span>Add Doctor Details</span></h3>
+                    </div>
+                    <br>
+
+                    <!-- Profile Image Section -->
+                    <div class="text-center mb-4">
+                        <div class="profile-image-container" style="position: relative; display: inline-block;">
+                            <img id="profilePreview" 
+                                 src="{% static 'images/default-doctor.jpg' %}" 
+                                 alt="Profile Preview"
+                                 style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #00b4d8; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="dname" class="form-label">Doctor Name</label>
+                                <input type="text" class="form-control" id="dname" placeholder="Enter doctor's name" name="dname" required>
+                            </div>
+                        </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="dmobile" class="form-label">Mobile Number</label>
+                                <input type="tel" class="form-control" id="dmobile" placeholder="Enter mobile number" name="dmobile" required>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group mb-3">
+                                <label for="department" class="form-label">Department</label>
+                                <select class="form-control" id="department" name="department" required>
+                                    <option value="">Select Department</option>
+                                    <option value="Cardiology">Cardiology</option>
+                                    <option value="Neurology">Neurology</option>
+                                    <option value="Dentist">Dentist</option>
+                                    <option value="Orthopedics">Orthopedics</option>
+                                    <option value="Dermatology">Dermatology</option>
+                                    <option value="Children-Doctor">Children-Doctor</option>
+                                    <option value="Physician">Physician</option>
+                                    
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="dexperience" class="form-label">Experience</label>
+                        <textarea class="form-control" id="dexperience" placeholder="Enter experience details" name="dexperience" rows="3" required></textarea>
+                    </div>
+
+                    <!-- Charges Section -->
+                    <div class="section-title text-center mt-4">
+                        <h4><span>Consultation Charges</span></h4>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="consultation_fee" class="form-label">Initial Consultation Fee (₹)</label>
+                                <input type="number" class="form-control" id="consultation_fee" name="consultation_fee" required min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="follow_up_fee" class="form-label">Follow-up Fee (₹)</label>
+                                <input type="number" class="form-control" id="follow_up_fee" name="follow_up_fee" required min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="emergency_fee" class="form-label">Emergency Fee (₹)</label>
+                                <input type="number" class="form-control" id="emergency_fee" name="emergency_fee" required min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="description" class="form-label">Additional Information</label>
+                        <textarea class="form-control" id="description" placeholder="Enter additional information about charges" name="description" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group mb-8">
+                        <label for="dprofile" class="form-label">Profile Image</label>
+                        <input type="file" class="form-control" id="dprofile" name="dprofile" accept="image/*" onchange="previewImage(this);">
+                        <small class="text-muted">Upload a profile picture (JPG, PNG, or GIF)</small>
+                    </div>
+
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-primary px-5 py-3" style="border-radius: 25px;">
+                            <i class="fas fa-user-md me-2"></i>Add Doctor
+                        </button>
+                    </div>
+                    {% if msg %}
+                    <div class="alert alert-danger mt-6 text-center">
+                        {{ msg }}
+                    </div>
+                {% endif %}
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Add Doctor Section -->
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Add JavaScript for image preview -->
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('profilePreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+
+{% endblock %}

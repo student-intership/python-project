@@ -1,0 +1,261 @@
+<!-- appointment_print.html -->
+{% extends 'header.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-print"></i> Appointment Print Center</h2>
+                <div>
+                    <a href="{% url 'appointment_print' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Print Form for Patients -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-print"></i> Print Your Appointments</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{% url 'print' %}" target="_blank">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="print_type"><strong>What would you like to print?</strong></label>
+                                    <select name="type" id="print_type" class="form-control" required>
+                                        <option value="">Select print option...</option>
+                                        <option value="all">All My Appointments</option>
+                                        <option value="upcoming">Upcoming Appointments Only</option>
+                                        <option value="pending">Pending Appointments Only</option>
+                                        <option value="confirmed">Confirmed Appointments Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="status_filter"><strong>Filter by Status (Optional)</strong></label>
+                                    <select name="status" id="status_filter" class="form-control">
+                                        <option value="">All Status</option>
+                                        {% for status in available_statuses %}
+                                        <option value="{{ status }}">{{ status }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="date_from"><strong>From Date (Optional)</strong></label>
+                                    <input type="date" name="date_from" id="date_from" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-print"></i> Print Appointments
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Print Buttons -->
+    
+    <!-- Current Appointments Preview -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    {% if appointments %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th>#</th>
+                                        {% if user.usertype == "Doctor" %}
+                                            <th>Patient Name</th>
+                                            <th>Patient Email</th>
+                                            <th>Patient Phone</th>
+                                        {% else %}
+                                            <th>Doctor Name</th>
+                                            <th>Department</th>
+                                        {% endif %}
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appointment in appointments %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        {% if user.usertype == "Doctor" %}
+                                            <td><strong>{{ appointment.name }}</strong></td>
+                                            <td>{{ appointment.email }}</td>
+                                            <td>{{ appointment.phone }}</td>
+                                        {% else %}
+                                            <td><strong>{{ appointment.doctor.dname|default:"Not assigned" }}</strong></td>
+                                            <td>{{ appointment.doctor.department|default:"Not specified" }}</td>
+                                        {% endif %}
+                                        <td>{{ appointment.date }}</td>
+                                        <td>{{ appointment.time }}</td>
+                                        <td>
+                                            <span class="badge {% if appointment.status == 'Confirmed' %}bg-success{% elif appointment.status == 'Pending' %}bg-warning{% elif appointment.status == 'Denied' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                {{ appointment.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'print' %}?type=single&appointment_id={{ appointment.id }}" class="btn btn-sm btn-primary" title="Print Details" target="_blank">
+                                                    <i class="fas fa-print"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Appointments Found</h4>
+                            <p class="text-muted">There are no appointments to display for the current filter criteria.</p>
+                            <a href="{% url 'appointment' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Book New Appointment
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Success Modal -->
+<div class="modal fade" id="printSuccessModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle"></i> Print Successful
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-print fa-3x text-success mb-3"></i>
+                <h4>Print Job Sent!</h4>
+                <p>Your appointment report has been sent to the printer successfully.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showCustomFilter() {
+    document.getElementById('customFilterSection').style.display = 'block';
+}
+
+function hideCustomFilter() {
+    document.getElementById('customFilterSection').style.display = 'none';
+}
+
+function clearForm() {
+    // Clear all form fields
+    document.getElementById('print_type').value = '';
+    document.getElementById('status_filter').value = '';
+    document.getElementById('date_from').value = '';
+    document.getElementById('date_to').value = '';
+    
+    // Show success message
+    alert('Form cleared successfully!');
+}
+
+function printCurrentView() {
+    // Open current view in print window
+    const currentUrl = window.location.href;
+    const printUrl = currentUrl.includes('?') ? currentUrl + '&print=true' : currentUrl + '?print=true';
+    window.open(printUrl, '_blank');
+    
+    // Show success modal
+    $('#printSuccessModal').modal('show');
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const printTypeSelect = document.getElementById('print_type');
+    
+    form.addEventListener('submit', function(e) {
+        if (!printTypeSelect.value) {
+            e.preventDefault();
+            alert('Please select what you would like to print!');
+            printTypeSelect.focus();
+            return false;
+        }
+        
+        // Show loading message
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing Print...';
+        submitBtn.disabled = true;
+        
+        // Reset button after a short delay
+        setTimeout(function() {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 2000);
+    });
+    
+    // Date validation
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+    
+    dateFrom.addEventListener('change', function() {
+        if (dateTo.value && dateFrom.value > dateTo.value) {
+            alert('From date cannot be after To date!');
+            dateFrom.value = '';
+        }
+    });
+    
+    dateTo.addEventListener('change', function() {
+        if (dateFrom.value && dateTo.value < dateFrom.value) {
+            alert('To date cannot be before From date!');
+            dateTo.value = '';
+        }
+    });
+});
+
+// Auto-hide success modal after 3 seconds
+$(document).ready(function() {
+    $('#printSuccessModal').on('shown.bs.modal', function() {
+        setTimeout(function() {
+            $('#printSuccessModal').modal('hide');
+        }, 3000);
+    });
+});
+</script>
+{% endblock %} 

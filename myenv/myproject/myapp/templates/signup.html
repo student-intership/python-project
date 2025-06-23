@@ -1,0 +1,70 @@
+{% extends "header.html" %}
+{% load static %}
+{% block content %}
+
+<!--Page Title-->
+<section class="page-title text-center" style="background-image:url({% static 'images/background/3.jpg' %});">
+    <div class="container">
+        <div class="title-text">
+            <h1>appointment</h1>
+            <ul class="title-menu clearfix">
+                <li><a href="{% url 'index' %}">home &nbsp;/</a></li>
+                <li>appointment</li>
+            </ul>
+        </div>
+    </div>
+</section>
+<!--End Page Title-->
+
+<!-- Signup Section -->
+<section class="d-flex align-items-center justify-content-center" style="min-height: 9vh;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <form method="post" action="{% url 'signup' %}" class="bg-light p-5 rounded shadow-lg contact-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="section-title text-center">
+                        <h3><span>signup</span></h3>
+                    </div>
+                    <br>
+                    <div class="form-group text-center">
+                        <select name="usertype" class="form-control text-center" requiredrver >
+                            <option value="">--------------- Select Usertype -------------</option>
+                            <option value="Doctor">Doctors</option>
+                            <option value="patient">Patients</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Your Name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="email" class="form-control" placeholder="Your Email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="tel" class="form-control" placeholder="Your Mobile No" name="mobile" required>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" class="form-control" placeholder="Password" name="password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" class="form-control" placeholder="Confirm Password" name="cpassword" required>
+                    </div>
+
+                    
+
+                    <div class="form-group text-center">
+                        <input type="submit" value="Signup" class="btn btn-primary px-5">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Signup Section -->
+
+{% endblock %}

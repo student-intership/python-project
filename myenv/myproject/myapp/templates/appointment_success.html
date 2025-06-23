@@ -1,0 +1,81 @@
+{% extends 'header.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow text-center">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="mb-4">Appointment Confirmed!</h2>
+                    <p class="lead mb-4">Your appointment has been successfully booked and confirmed.</p>
+                    
+                    <div class="appointment-details mb-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>Appointment ID</th>
+                                    <td>{{ appointment.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <td>{{ appointment.doctor.dname }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Department</th>
+                                    <td>{{ appointment.doctor.department }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date</th>
+                                    <td>{{ appointment.date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Time</th>
+                                    <td>{{ appointment.time }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Consultation Fee</th>
+                                    <td>₹{{ appointment.doctor.consultation_fee }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Important Information</h5>
+                        <ul class="mb-0 text-start">
+                            <li>Please arrive 15 minutes before your appointment time</li>
+                            <li>Bring your ID proof and any relevant medical records</li>
+                            <li>You will receive a confirmation email shortly</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{% url 'index' %}" class="btn btn-primary me-2">Back to Home</a>
+                        <a href="{% url 'appointment_print' %}" class="btn btn-outline-primary" onclick="window.print()">Print Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .no-print {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+</style>
+{% endblock %} 

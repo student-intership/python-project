@@ -1,0 +1,216 @@
+<!-- appointment_details.html -->
+{% extends 'dheader.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Appointment Details</h2>
+                <div>
+                    <a href="{% url 'patient_details' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Appointments
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if appointment %}
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-calendar-check"></i> 
+                    Appointment #{{ appointment.id }}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Patient Information -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-info text-white">
+                                <h4 class="mb-0"><i class="fas fa-user"></i> Patient Information</h4>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Name:</strong></td>
+                                        <td>{{ appointment.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td>{{ appointment.email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        <td>{{ appointment.phone }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Age:</strong></td>
+                                        <td>{{ appointment.age }} years</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Date of Birth:</strong></td>
+                                        <td>{{ appointment.date_of_birth|default:"Not provided" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Address:</strong></td>
+                                        <td>{{ appointment.address|default:"Not provided" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Appointment Details -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white">
+                                <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> Appointment Details</h4>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Date:</strong></td>
+                                        <td>{{ appointment.date }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Time:</strong></td>
+                                        <td>{{ appointment.time }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if appointment.status == 'Confirmed' %}badge-success
+                                                {% elif appointment.status == 'Pending' %}badge-warning
+                                                {% elif appointment.status == 'Cancelled' %}badge-danger
+                                                {% elif appointment.status == 'Completed' %}badge-info
+                                                {% else %}badge-secondary{% endif %}">
+                                                {{ appointment.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Doctor:</strong></td>
+                                        <td>{{ appointment.doctor.dname|default:"Not assigned" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Department:</strong></td>
+                                        <td>{{ appointment.doctor.department|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Consultation Fee:</strong></td>
+                                        <td>${{ appointment.doctor.consultation_fee|default:"0" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Doctor Information (if available) -->
+                {% if appointment.doctor %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h4 class="mb-0"><i class="fas fa-user-md"></i> Doctor Information</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 text-center">
+                                        {% if appointment.doctor.dprofile %}
+                                            <img src="{{ appointment.doctor.dprofile.url }}" 
+                                                 alt="Doctor Profile" 
+                                                 class="img-fluid rounded-circle mb-3" 
+                                                 style="width: 150px; height: 150px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                                 style="width: 150px; height: 150px;">
+                                                <i class="fas fa-user-md fa-3x text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>Name:</strong> {{ appointment.doctor.dname }}</p>
+                                                <p><strong>Mobile:</strong> {{ appointment.doctor.dmobile }}</p>
+                                                <p><strong>Experience:</strong> {{ appointment.doctor.dexperience }} years</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Department:</strong> {{ appointment.doctor.department }}</p>
+                                                <p><strong>Follow-up Fee:</strong> ${{ appointment.doctor.follow_up_fee|default:"0" }}</p>
+                                                <p><strong>Emergency Fee:</strong> ${{ appointment.doctor.emergency_fee|default:"0" }}</p>
+                                            </div>
+                                        </div>
+                                        {% if appointment.doctor.description %}
+                                        <div class="mt-3">
+                                            <strong>Description:</strong>
+                                            <p class="text-muted">{{ appointment.doctor.description }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+               {% if user.usertype == "Doctor" and appointment.status == "Pending" %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                         <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0"><i class="fas fa-cogs"></i> Manage Appointment</h4>
+                            </div>
+                            <div class="card-body text-center">
+                                <button class="btn btn-success btn-lg mr-3" onclick="updateStatus('Confirmed')">
+                                    <i class="fas fa-check"></i> Confirm Appointment
+                                </button>
+                                <button class="btn btn-danger btn-lg" onclick="updateStatus('Cancelled')">
+                                    <i class="fas fa-times"></i> Cancel Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Appointment not found.
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printAppointment() {
+    window.print();
+}
+
+function updateStatus(status) {
+    const statusText = status === 'Confirmed' ? 'confirm' : 'cancel';
+    document.getElementById('statusAction').textContent = statusText;
+    document.getElementById('confirmStatusUpdate').onclick = function() {
+        // Here you would typically make an AJAX call to update the status
+        // For now, we'll just show a message
+        alert(`Appointment status updated to ${status}`);
+        $('#statusModal').modal('hide');
+        // Reload the page to show updated status
+        location.reload();
+    };
+    $('#statusModal').modal('show');
+}
+</script>
+{% endblock %} 
